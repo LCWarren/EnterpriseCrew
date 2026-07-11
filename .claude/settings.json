@@ -1,0 +1,19 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          { "type": "command", "command": "bash .claude/hooks/check-standing-orders.sh" },
+          { "type": "command", "command": "bash .claude/hooks/show-handoff.sh" }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "bash .claude/hooks/require-review.sh" }
+        ]
+      }
+    ]
+  }
+}
