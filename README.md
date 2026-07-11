@@ -1,4 +1,4 @@
-# Enterprise
+# EnterpriseCrew
 
 A small Claude Code harness built around one rule: ceremony has to earn its
 keep. Every piece below exists because it maps to something with actual
