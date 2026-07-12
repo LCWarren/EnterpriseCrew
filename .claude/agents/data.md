@@ -28,7 +28,13 @@ so the harness's Stop hook recognizes this diff as reviewed:
 
 ```bash
 mkdir -p .claude/state
-HASH=$(git diff HEAD | shasum | awk '{print $1}')
+# Hash the full change surface: tracked diff PLUS new untracked (non-ignored)
+# files. This MUST stay byte-identical to the Stop hook's DIFF_HASH recipe in
+# require-review.sh, or the marker you write here will never satisfy the hook.
+HASH=$( { git diff HEAD -- . ':!.claude/state' 2>/dev/null; \
+  git ls-files --others --exclude-standard -z -- . ':!.claude/state' 2>/dev/null \
+    | while IFS= read -r -d '' f; do printf '\n=== untracked: %s ===\n' "$f"; cat "$f" 2>/dev/null; done; \
+  } | shasum | awk '{print $1}')
 jq -n --arg h "$HASH" --arg t "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
   '{diff_hash: $h, reviewed_at: $t}' > .claude/state/last-review.json
 ```
