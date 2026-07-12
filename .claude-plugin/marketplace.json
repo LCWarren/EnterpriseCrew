@@ -1,0 +1,34 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "enterprise-crew",
+  "metadata": {
+    "description": "EnterpriseCrew — a thin, evidence-gated Claude Code harness. Ceremony has to earn its keep."
+  },
+  "owner": {
+    "name": "Lewis Warren",
+    "email": "Lewis.C.Warren@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "enterprise-crew",
+      "description": "A thin Claude Code harness where ceremony has to earn its keep: independent review (Data), read-only recon (away-team), impact-mapped tests (Geordi), risk-gated planning, and a Stop-hook that enforces review on non-trivial changes.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Lewis Warren",
+        "email": "Lewis.C.Warren@gmail.com"
+      },
+      "source": "./.claude",
+      "category": "development",
+      "homepage": "https://github.com/LCWarren/EnterpriseCrew",
+      "repository": "https://github.com/LCWarren/EnterpriseCrew",
+      "tags": [
+        "engineering",
+        "discipline",
+        "code-review",
+        "hooks",
+        "skills",
+        "agents"
+      ]
+    }
+  ]
+}

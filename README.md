@@ -18,6 +18,7 @@ a piece if there's a real mechanism for why it should help.
 | Piece | File | What it does | Why |
 |---|---|---|---|
 | Picard | (you, the main agent) | Sole write authority. Nothing downstream acts unilaterally. | Reports from sub-agents are investigation, not authorization — someone has to own the decision to act on them. |
+| Init | `.claude/skills/init/SKILL.md` | Installs the per-project enforcement layer (hooks, `settings.json`, `state/`) and merges `CLAUDE.md` into whatever project you run it in. | The plugin makes agents/skills global; this is the seam that opts a single project into the hook-enforced review gate, so ceremony only runs where you asked for it. |
 | Commission | `.claude/skills/commission/SKILL.md` | Detects the stack from the repo itself and fills in `CLAUDE.md`'s Standing Orders — the one part of this harness that's project-specific by design. | Everything else here is stack-independent. This is the deliberate seam where it meets a real codebase, and it has to happen before anything else is useful. |
 | Away team | `.claude/agents/away-team.md`, `.claude/skills/away-team/SKILL.md` | Read-only investigation, dispatched for bounded recon tasks, reports back. | Delegating read-heavy exploration to an isolated context is the one multi-agent pattern with real evidence behind it — it's how Anthropic's own research system beat single-agent performance. It's explicitly a poor fit for tightly-coupled write work, so it's kept read-only here on purpose. |
 | Data | `.claude/agents/data.md` | Independent review of a proposed change, in a fresh context, scoped to logic/security/regressions only. Records the review so the Stop hook recognizes it. | The single best-evidenced idea in this space: a separate evaluator catches what a self-reviewing agent won't. Scoped narrow on purpose — mixing in style feedback tanks signal-to-noise and gets ignored. |
@@ -54,22 +55,47 @@ decides. That distinction is the whole reason this section exists.
 
 ## Using it
 
-1. Drop `.claude/` and `CLAUDE.md` into a project root.
-2. Start a session. The `check-standing-orders` hook will notice the
-   Standing Orders are still placeholders and prompt the `commission`
-   skill to run — it detects your stack from the repo itself and fills in
-   the real test/dev/lint commands, confirming with you only where it's
-   genuinely ambiguous.
+EnterpriseCrew installs as a Claude Code **plugin** served from this repo
+as a **marketplace**. That's what makes the agents and skills global —
+available in every project, namespaced `/enterprise-crew:*`, the same way
+any marketplace plugin works. The enforcement layer (hooks, review marker,
+CLAUDE.md conventions) is deliberately *not* global — you opt a project in
+with a one-time `init`, so a review gate never fires in a repo you didn't
+choose to run it in.
+
+### Install once (global)
+
+```
+/plugin marketplace add LCWarren/EnterpriseCrew
+/plugin install enterprise-crew@enterprise-crew
+```
+
+Now `away-team`, `data`, `geordi`, and the skills are available in every
+project. Requires `jq` for the review-enforcement hook — `winget install
+jqlang.jq` (Windows), `brew install jq` (macOS), `apt install jq` (Debian).
+
+### Per project (opt in)
+
+1. In the project you want to use it on, run `/enterprise-crew:init`. It
+   installs the hooks, `settings.json`, and `.claude/state/` into that
+   project and merges its `CLAUDE.md` — without clobbering anything already
+   there.
+2. Run `commission`. The `check-standing-orders` hook notices the Standing
+   Orders are still placeholders and prompts it; it detects your stack from
+   the repo itself and fills in the real test/dev/lint commands, confirming
+   with you only where it's genuinely ambiguous.
 3. Work normally. `away-team` and `red-alert` auto-invoke when the context
-   matches; call them explicitly with `/away-team` and `/red-alert` if you
-   want to force it.
-4. On any change of real size, the `require-review` hook will block you
-   from finishing until you dispatch `data` to review the diff. Small
-   changes never hit this — the threshold matches red-alert's own
-   Yellow/Red split.
+   matches; call them explicitly if you want to force it.
+4. On any change of real size, the `require-review` hook blocks you from
+   finishing until you dispatch `data` to review the diff. Small changes
+   never hit this — the threshold matches red-alert's own Yellow/Red split.
 5. Before ending a session, run `end-of-shift` (or let Claude offer it) to
-   write a handoff note. It'll surface automatically at the start of the
-   next session.
+   write a handoff note. It surfaces automatically at the start of the next
+   session.
+
+> Prefer the old no-plugin flow? You can still drop `.claude/` and
+> `CLAUDE.md` straight into a project root — the plugin layer is additive,
+> not required.
 
 **Note:** `.claude/state/` holds session-local files (`handoff.md`,
 `last-review.json`). Add it to your project's `.gitignore` unless you
